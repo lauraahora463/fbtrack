@@ -4,7 +4,6 @@ import axios from 'axios';
 import crypto from 'crypto';
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const PIXEL_ID = process.env.PIXEL_ID;
 
 function hash(data) {
   return crypto.createHash('sha256').update(data.trim().toLowerCase()).digest('hex');
@@ -14,7 +13,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   await dbConnect();
-  const { fbclid, phone, timestamp, landing } = req.body;
+  const { fbclid, phone, timestamp, landing, pixelId } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const user_agent = req.headers['user-agent'];
 
@@ -31,7 +30,7 @@ export default async function handler(req, res) {
     };
 
     const metaResponse = await axios.post(
-      `https://graph.facebook.com/v19.0/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`,
+      `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${ACCESS_TOKEN}`,
       { data: [event] }
     );
 
