@@ -10,21 +10,33 @@ function hash(data) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') return res.status(405).end();
 
   await dbConnect();
-  const { fbclid, phone, timestamp, landing, pixelId } = req.body;
+  const { fbclid, timestamp, landing, pixelId } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const user_agent = req.headers['user-agent'];
+
+  // Sanitizar landing
+  const safeLanding = landing.replace(/[^a-zA-Z0-9]/g, '');
+  const event_source_url = `https://${safeLanding}.ahora4633.io`;
 
   try {
     const event = {
       event_name: 'Lead',
       event_time: Math.floor((timestamp || Date.now()) / 1000),
       action_source: 'website',
-      event_source_url: `https://${landing}.ahora4633.io`,
+      event_source_url,
       user_data: {
-        fbclid,
+        fbclid
       }
     };
 
@@ -33,7 +45,7 @@ export default async function handler(req, res) {
       { data: [event] }
     );
 
-    const click = await Click.create({ fbclid, phone, timestamp, ip, user_agent, meta_response: metaResponse.data, landing });
+    const click = await Click.create({ fbclid, timestamp, ip, user_agent, meta_response: metaResponse.data, landing });
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
