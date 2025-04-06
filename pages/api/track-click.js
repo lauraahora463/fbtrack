@@ -22,10 +22,9 @@ export default async function handler(req, res) {
       event_name: 'Lead',
       event_time: Math.floor((timestamp || Date.now()) / 1000),
       action_source: 'website',
-      event_source_url: 'https://tucasino.com/landing',
+      event_source_url: `https://${landing}.ahora4633.io`,
       user_data: {
         fbclid,
-        ph: phone ? hash(phone) : undefined
       }
     };
 

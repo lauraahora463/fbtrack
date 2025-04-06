@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 
 const ClickSchema = new mongoose.Schema({
   fbclid: String,
-  phone: String,
   timestamp: Number,
   ip: String,
   user_agent: String,
