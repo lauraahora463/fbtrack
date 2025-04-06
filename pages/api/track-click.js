@@ -3,7 +3,7 @@ import Click from '../../models/Click';
 import axios from 'axios';
 import crypto from 'crypto';
 
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+const DEFAULT_ACCESS_TOKEN = process.env.ACCESS_TOKEN; // por si no se manda nada
 
 function hash(data) {
   return crypto.createHash('sha256').update(data.trim().toLowerCase()).digest('hex');
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
 
   await dbConnect();
 
-  const { fbclid, timestamp, landing, pixelId } = req.body;
+  const { fbclid, timestamp, landing, pixelId, accessToken } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const user_agent = req.headers['user-agent'];
 
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     };
 
     const metaResponse = await axios.post(
-      `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${ACCESS_TOKEN}`,
+      `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken || DEFAULT_ACCESS_TOKEN}`,
       { data: [event] }
     );
 
