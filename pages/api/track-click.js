@@ -1,5 +1,5 @@
-import dbConnect from '@/lib/db';
-import Click from '@/models/Click';
+import dbConnect from '../../lib/db';
+import Click from '../../models/Click';
 import axios from 'axios';
 import crypto from 'crypto';
 
