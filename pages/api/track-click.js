@@ -28,18 +28,15 @@ export default async function handler(req, res) {
   try {
     console.log('📥 Datos recibidos:', { fbclid, timestamp, landing, pixelId });
 
-    const user_data = {};
-    if (fbclid) {
-      // El fbclid NO va en user_data directamente porque da error, pero se puede guardar en la DB
-      console.log('ℹ️ El fbclid será guardado pero no enviado a Meta directamente.');
-    }
-
     const event = {
       event_name: 'Lead',
       event_time: Math.floor((timestamp || Date.now()) / 1000),
       action_source: 'website',
       event_source_url,
-      user_data
+      user_data: {
+        client_ip_address: ip,
+        client_user_agent: user_agent
+      }
     };
 
     const metaResponse = await axios.post(
