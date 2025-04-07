@@ -78,12 +78,6 @@ export default function Home() {
           >
             Exportar CSV
           </CSVLink>
-          <button
-            onClick={handleTestClick}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 shadow"
-          >
-            🔄 Simular Clic de Prueba
-          </button>
         </div>
   
         <div className="overflow-auto max-h-[500px] border rounded shadow">
