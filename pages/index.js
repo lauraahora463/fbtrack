@@ -163,19 +163,19 @@ export default function Home() {
           <table className="w-full text-sm table-fixed border border-gray-300">
             <thead className="bg-blue-100 sticky top-0 z-10">
               <tr>
-                <th className="p-3 border border-gray-300">Fecha & Hora</th>
-                <th className="p-3 border border-gray-300">Landing</th>
-                <th className="p-3 border border-gray-300">IP</th>
-                <th className="p-3 border border-gray-300">User Agent</th>
+                <th className="p-4 border border-black-300">Fecha & Hora</th>
+                <th className="p-4 border border-black-300">Landing</th>
+                <th className="p-4 border border-black-300">IP</th>
+                <th className="p-4 border border-black-300">User Agent</th>
               </tr>
             </thead>
             <tbody>
               {displayedData.map((c, i) => (
                 <tr key={i} className="hover:bg-gray-50">
-                  <td className="p-3 border border-gray-200">{new Date(c.createdAt).toLocaleString()}</td>
-                  <td className="p-3 border border-gray-200">{c.landing}</td>
-                  <td className="p-3 border border-gray-200">{c.ip}</td>
-                  <td className="p-3 border border-gray-200 break-all">{c.user_agent?.slice(0, 70)}...</td>
+                  <td className="p-4 border border-black-200">{new Date(c.createdAt).toLocaleString()}</td>
+                  <td className="p-4 border border-black-200">{c.landing}</td>
+                  <td className="p-4 border border-black-200">{c.ip}</td>
+                  <td className="p-4 border border-black-200 break-all">{c.user_agent?.slice(0, 70)}...</td>
                 </tr>
               ))}
             </tbody>
