@@ -1,36 +1,24 @@
-// app/page.tsx (Next.js 13+ con App Router) o pages/index.js (Next.js 12)
-'use client';
 import React, { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import { CSVLink } from 'react-csv';
+import Chart from 'chart.js/auto';
 import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS, CategoryScale, LinearScale, PointElement,
-  LineElement, Title, Tooltip, Legend,
-} from 'chart.js';
-import 'react-datepicker/dist/react-datepicker.css';
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function Home() {
-  const [auth, setAuth] = useState(false);
-  const [password, setPassword] = useState('');
   const [clicks, setClicks] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [hideDuplicates, setHideDuplicates] = useState(false);
-
-  const storedPassword = process.env.NEXT_PUBLIC_PANEL_PASSWORD;
-
-  useEffect(() => {
-    if (auth) fetchData();
-  }, [startDate, endDate]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
 
   useEffect(() => {
-    filterData();
-  }, [search, clicks, hideDuplicates]);
+    if (!isLoggedIn) return;
+    fetchData();
+  }, [startDate, endDate, isLoggedIn]);
 
   const fetchData = async () => {
     const params = new URLSearchParams();
@@ -42,139 +30,152 @@ export default function Home() {
     setFiltered(data);
   };
 
-  const filterData = () => {
-    const lower = search.toLowerCase();
-    let filteredData = clicks.filter(c => c.landing?.toLowerCase().includes(lower));
-    if (hideDuplicates) {
-      const seenIps = new Set();
-      filteredData = filteredData.filter(c => {
-        if (seenIps.has(c.ip)) return false;
-        seenIps.add(c.ip);
-        return true;
-      });
-    }
-    setFiltered(filteredData);
+  const handleSearch = (text) => {
+    setSearch(text);
+    const lower = text.toLowerCase();
+    const filteredList = clicks.filter(c =>
+      c.landing?.toLowerCase().includes(lower)
+    );
+    setFiltered(filteredList);
   };
+
+  const handleLogin = () => {
+    if (passwordInput === process.env.NEXT_PUBLIC_PANEL_PASSWORD) {
+      setIsLoggedIn(true);
+      setPasswordInput('');
+    } else {
+      alert("Contraseña incorrecta");
+    }
+  };
+
+  const uniqueByIp = (arr) => {
+    const seen = new Set();
+    return arr.filter(item => {
+      if (seen.has(item.ip)) return false;
+      seen.add(item.ip);
+      return true;
+    });
+  };
+
+  const displayedData = hideDuplicates ? uniqueByIp(filtered) : filtered;
 
   const headers = [
     { label: "Fecha", key: "createdAt" },
     { label: "Landing", key: "landing" },
     { label: "IP", key: "ip" },
-    { label: "User Agent", key: "user_agent" }
+    { label: "User Agent", key: "user_agent" },
   ];
 
-  const groupedData = filtered.reduce((acc, curr) => {
-    const date = new Date(curr.createdAt).toLocaleDateString();
-    acc[date] = (acc[date] || 0) + 1;
-    return acc;
-  }, {});
-
   const chartData = {
-    labels: Object.keys(groupedData),
+    labels: clicks.map(c => new Date(c.createdAt).toLocaleDateString()),
     datasets: [{
-      label: 'Clicks por día',
-      data: Object.values(groupedData),
+      label: 'Clicks',
+      data: clicks.map((_, i) => i + 1),
       fill: false,
-      backgroundColor: 'rgba(59, 130, 246, 0.6)',
-      borderColor: 'rgba(59, 130, 246, 1)',
+      borderColor: '#3b82f6',
       tension: 0.3
     }]
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (password === storedPassword) setAuth(true);
-    else alert('Contraseña incorrecta');
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    height: 200
   };
 
-  if (!auth) {
+  if (!isLoggedIn) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-100">
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded shadow-lg w-full max-w-sm">
-          <h2 className="text-xl font-semibold mb-4 text-center">🔐 Iniciar sesión</h2>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
+          <h2 className="text-xl font-bold mb-4 text-center text-blue-700">🔐 Acceso al Panel</h2>
           <input
             type="password"
             placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded mb-4"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            className="border border-gray-300 p-2 rounded w-full mb-4"
           />
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-            Entrar
+          <button
+            onClick={handleLogin}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
+          >
+            Ingresar
           </button>
-        </form>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl bg-white p-6 rounded-lg shadow-xl">
-        <h1 className="text-3xl font-bold text-center text-blue-700 mb-6">📊 Panel de Clicks desde WhatsApp</h1>
+    <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
+      <div className="max-w-7xl w-full bg-white p-8 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">
+          📊 Panel de Clicks desde WhatsApp
+        </h1>
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <input
             type="text"
             placeholder="Buscar por landing"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border border-gray-300 p-2 rounded w-full md:w-1/3"
+            onChange={(e) => handleSearch(e.target.value)}
+            className="border border-gray-300 p-2 rounded shadow-sm w-full"
           />
           <DatePicker
             selected={startDate}
             onChange={(date) => setStartDate(date)}
             placeholderText="Desde"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/3"
+            className="border border-gray-300 p-2 rounded shadow-sm w-full"
           />
           <DatePicker
             selected={endDate}
             onChange={(date) => setEndDate(date)}
             placeholderText="Hasta"
-            className="border border-gray-300 p-2 rounded w-full md:w-1/3"
+            className="border border-gray-300 p-2 rounded shadow-sm w-full"
           />
-        </div>
-
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center space-x-2">
             <input
               type="checkbox"
               checked={hideDuplicates}
-              onChange={() => setHideDuplicates(!hideDuplicates)}
+              onChange={(e) => setHideDuplicates(e.target.checked)}
+              className="w-5 h-5"
             />
-            Evitar IPs duplicadas
+            <span className="text-sm">Evitar IPs duplicadas</span>
           </label>
+        </div>
 
+        <div className="mb-6 flex flex-wrap gap-4 justify-center">
           <CSVLink
-            data={filtered}
+            data={displayedData}
             headers={headers}
             filename={`clicks-${Date.now()}.csv`}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow"
           >
             Exportar CSV
           </CSVLink>
         </div>
 
-        <div className="mb-8">
-          <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} height={200} />
+        <div className="mb-8 h-64">
+          <Line data={chartData} options={chartOptions} />
         </div>
 
-        <div className="overflow-auto max-h-[400px] border border-gray-300 rounded-lg shadow">
-          <table className="min-w-full text-sm bg-white">
+        <div className="overflow-auto border rounded shadow">
+          <table className="w-full text-sm table-fixed border border-gray-300">
             <thead className="bg-blue-100 sticky top-0 z-10">
               <tr>
-                <th className="text-left p-3 border-r border-gray-300">Fecha</th>
-                <th className="text-left p-3 border-r border-gray-300">Landing</th>
-                <th className="text-left p-3 border-r border-gray-300">IP</th>
-                <th className="text-left p-3">User Agent</th>
+                <th className="p-3 border border-gray-300">Fecha & Hora</th>
+                <th className="p-3 border border-gray-300">Landing</th>
+                <th className="p-3 border border-gray-300">IP</th>
+                <th className="p-3 border border-gray-300">User Agent</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c, i) => (
-                <tr key={i} className="border-t border-gray-200 hover:bg-gray-50">
-                  <td className="p-3 border-r border-gray-100">{new Date(c.createdAt).toLocaleString()}</td>
-                  <td className="p-3 border-r border-gray-100">{c.landing}</td>
-                  <td className="p-3 border-r border-gray-100">{c.ip}</td>
-                  <td className="p-3">{c.user_agent?.slice(0, 50)}...</td>
+              {displayedData.map((c, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="p-3 border border-gray-200">{new Date(c.createdAt).toLocaleString()}</td>
+                  <td className="p-3 border border-gray-200">{c.landing}</td>
+                  <td className="p-3 border border-gray-200">{c.ip}</td>
+                  <td className="p-3 border border-gray-200 break-all">{c.user_agent?.slice(0, 70)}...</td>
                 </tr>
               ))}
             </tbody>
