@@ -28,27 +28,13 @@ export default function Home() {
     setSearch(text);
     const lower = text.toLowerCase();
     setFiltered(clicks.filter(c =>
-      c.phone?.includes(lower) || c.fbclid?.toLowerCase().includes(lower)
+      c.landing?.toLowerCase().includes(lower)
     ));
-  };
-
-  const handleTestClick = async () => {
-    const fbclid = 'fbclid-' + Math.random().toString(36).substring(2, 10);
-    const phone = '+549' + Math.floor(Math.random() * 1000000000);
-    const res = await fetch('/api/track-click', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fbclid, phone, timestamp: Date.now() })
-    });
-    const result = await res.json();
-    alert(result.success ? '✅ Enviado correctamente' : '❌ Error al enviar');
-    fetchData();
   };
 
   const headers = [
     { label: "Fecha", key: "createdAt" },
-    { label: "FBCLID", key: "fbclid" },
-    { label: "Teléfono", key: "phone" },
+    { label: "Landing", key: "landing" },
     { label: "IP", key: "ip" },
     { label: "User Agent", key: "user_agent" },
     { label: "Landing", key: "landing" }
@@ -64,7 +50,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <input
             type="text"
-            placeholder="Buscar por teléfono o fbclid"
+            placeholder="Buscar por landing"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="border border-gray-300 p-2 rounded shadow-sm w-full"
@@ -105,8 +91,7 @@ export default function Home() {
             <thead className="bg-gray-200 sticky top-0 z-10">
               <tr>
                 <th className="text-left p-2">Fecha</th>
-                <th className="text-left p-2">FBCLID</th>
-                <th className="text-left p-2">Teléfono</th>
+                <th className="text-left p-2">Landing</th>
                 <th className="text-left p-2">IP</th>
                 <th className="text-left p-2">User Agent</th>
               </tr>
@@ -115,8 +100,7 @@ export default function Home() {
               {filtered.map((c, i) => (
                 <tr key={i} className="border-b hover:bg-gray-50">
                   <td className="p-2">{new Date(c.createdAt).toLocaleString()}</td>
-                  <td className="p-2">{c.fbclid}</td>
-                  <td className="p-2">{c.phone}</td>
+                  <td className="p-2">{c.landing}</td>
                   <td className="p-2">{c.ip}</td>
                   <td className="p-2">{c.user_agent?.slice(0, 50)}...</td>
                 </tr>
