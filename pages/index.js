@@ -181,6 +181,13 @@ export default function Home() {
             </tbody>
           </table>
         </div>
+
+        {/* ✅ Total de clics mostrados */}
+        <div className="mt-4 text-center">
+          <p className="text-lg font-semibold text-gray-700">
+            Total de clics mostrados: <span className="text-blue-600">{displayedData.length}</span>
+          </p>
+        </div>
       </div>
     </div>
   );
