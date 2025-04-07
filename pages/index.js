@@ -133,27 +133,35 @@ export default function Home() {
           </CSVLink>
         </div>
 
-        <div className="bg-white rounded-xl overflow-hidden shadow">
-          <Line data={graphData} options={{ responsive: true, plugins: { legend: { display: true } } }} />
+        <div className="bg-white rounded-xl shadow p-4 max-w-3xl mx-auto">
+          <Line
+            data={graphData}
+            options={{
+              responsive: true,
+              plugins: { legend: { display: true } },
+              maintainAspectRatio: false
+            }}
+            height={250} // achica el gráfico
+          />
         </div>
 
         <div className="overflow-auto max-h-[500px] border rounded-lg shadow">
-          <table className="w-full text-sm table-auto">
+          <table className="w-full text-sm border-collapse">
             <thead className="bg-blue-100 sticky top-0 z-10">
               <tr>
-                <th className="text-left p-3">Fecha</th>
-                <th className="text-left p-3">Landing</th>
-                <th className="text-left p-3">IP</th>
-                <th className="text-left p-3">User Agent</th>
+                <th className="text-left px-4 py-3 border-b border-gray-300">📅 Fecha</th>
+                <th className="text-left px-4 py-3 border-b border-gray-300">🔗 Landing</th>
+                <th className="text-left px-4 py-3 border-b border-gray-300">🌐 IP</th>
+                <th className="text-left px-4 py-3 border-b border-gray-300">🧠 User Agent</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-gray-50">
               {filtered.map((c, i) => (
-                <tr key={i} className="border-b hover:bg-gray-50">
-                  <td className="p-3">{new Date(c.createdAt).toLocaleString()}</td>
-                  <td className="p-3">{c.landing}</td>
-                  <td className="p-3">{c.ip}</td>
-                  <td className="p-3">{c.user_agent?.slice(0, 50)}...</td>
+                <tr key={i} className="border-b border-gray-200 hover:bg-white transition">
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-700">{new Date(c.createdAt).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-gray-700">{c.landing}</td>
+                  <td className="px-4 py-3 text-gray-700">{c.ip}</td>
+                  <td className="px-4 py-3 text-gray-600">{c.user_agent?.slice(0, 50)}...</td>
                 </tr>
               ))}
             </tbody>
