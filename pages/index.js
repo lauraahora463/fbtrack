@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import { CSVLink } from 'react-csv';
-import Chart from 'chart.js/auto';
 import { Line } from 'react-chartjs-2';
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -14,6 +13,15 @@ export default function Home() {
   const [hideDuplicates, setHideDuplicates] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+
+  const dominios = ["ahora463.io", "ahora4633.io"];
+
+  // Estado para manejar qué dominios están activos
+  const [dominiosActivos, setDominiosActivos] = useState(() => {
+    const initial = {};
+    dominios.forEach(d => { initial[d] = true });
+    return initial;
+  });
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -57,7 +65,10 @@ export default function Home() {
     });
   };
 
-  const displayedData = hideDuplicates ? uniqueByIp(filtered) : filtered;
+  // Filtrar por dominios activos
+  const filteredByDominio = filtered.filter(item => dominiosActivos[item.dominio]);
+
+  const displayedData = hideDuplicates ? uniqueByIp(filteredByDominio) : filteredByDominio;
 
   const headers = [
     { label: "Fecha", key: "createdAt" },
@@ -81,6 +92,13 @@ export default function Home() {
     responsive: true,
     maintainAspectRatio: false,
     height: 200
+  };
+
+  const handleToggleDominio = (dom) => {
+    setDominiosActivos(prev => ({
+      ...prev,
+      [dom]: !prev[dom]
+    }));
   };
 
   if (!isLoggedIn) {
@@ -144,6 +162,21 @@ export default function Home() {
           </label>
         </div>
 
+        {/* 🔘 Checkboxes dinámicos de dominios */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {dominios.map((dom) => (
+            <label key={dom} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={dominiosActivos[dom]}
+                onChange={() => handleToggleDominio(dom)}
+                className="w-5 h-5"
+              />
+              <span className="text-sm">Mostrar {dom}</span>
+            </label>
+          ))}
+        </div>
+
         <div className="mb-6 flex flex-wrap gap-4 justify-center">
           <CSVLink
             data={displayedData}
@@ -173,7 +206,7 @@ export default function Home() {
               {displayedData.map((c, i) => (
                 <tr key={i} className="hover:bg-gray-50">
                   <td className="p-4 border border-black-200">{new Date(c.createdAt).toLocaleString()}</td>
-                  <td className="p-4 border border-black-200">{c.landing}</td>
+                  <td className="p-4 border border-black-200">{c.landing}.{c.dominio}</td>
                   <td className="p-4 border border-black-200">{c.ip}</td>
                   <td className="p-4 border border-black-200 break-all">{c.user_agent?.slice(0, 70)}...</td>
                 </tr>

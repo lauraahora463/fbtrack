@@ -7,6 +7,7 @@ const ClickSchema = new mongoose.Schema({
   user_agent: String,
   meta_response: Object,
   landing: String,
+  dominio: String,
 }, { timestamps: true });
 
 export default mongoose.models.Click || mongoose.model('Click', ClickSchema);

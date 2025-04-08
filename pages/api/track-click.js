@@ -1,7 +1,6 @@
 import dbConnect from '../../lib/db';
 import Click from '../../models/Click';
 import axios from 'axios';
-import crypto from 'crypto';
 
 const DEFAULT_ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 
@@ -18,12 +17,12 @@ export default async function handler(req, res) {
 
   await dbConnect();
 
-  const { fbclid, timestamp, landing, pixelId, accessToken } = req.body;
+  const { fbclid, timestamp, landing, pixelId, accessToken, dominio } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const user_agent = req.headers['user-agent'];
 
   const safeLanding = landing ? landing.replace(/[^a-zA-Z0-9]/g, '') : 'desconocida';
-  const event_source_url = `https://${safeLanding}.ahora4633.io`;
+  const event_source_url = `https://${safeLanding}.${dominio}`;
 
   try {
     console.log('📥 Datos recibidos:', { fbclid, timestamp, landing, pixelId });
@@ -52,7 +51,8 @@ export default async function handler(req, res) {
       ip,
       user_agent,
       meta_response: metaResponse.data,
-      landing
+      landing,
+      dominio
     });
 
     console.log('💾 Click guardado en base de datos');
