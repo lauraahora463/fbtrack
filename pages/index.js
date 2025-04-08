@@ -2,7 +2,26 @@ import React, { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import { CSVLink } from 'react-csv';
 import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import "react-datepicker/dist/react-datepicker.css";
+
+// Registrar los componentes necesarios para Chart.js
+ChartJS.register(
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend
+);
 
 export default function Home() {
   const [clicks, setClicks] = useState([]);
