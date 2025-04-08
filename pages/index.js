@@ -78,8 +78,9 @@ export default function Home() {
   const uniqueByIp = (arr) => {
     const seen = new Set();
     return arr.filter(item => {
-      if (seen.has(item.ip)) return false;
-      seen.add(item.ip);
+      const key = `${item.ip}-${item.dominio}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   };
