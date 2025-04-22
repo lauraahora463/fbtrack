@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
+import styles from '../login.module.css'
 import { CSVLink } from 'react-csv';
 import { Line } from 'react-chartjs-2';
 import {
@@ -13,7 +14,6 @@ import {
 } from 'chart.js';
 import "react-datepicker/dist/react-datepicker.css";
 
-// Registrar los componentes necesarios para Chart.js
 ChartJS.register(
   LineElement,
   PointElement,
@@ -30,12 +30,13 @@ export default function Home() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [hideDuplicates, setHideDuplicates] = useState(false);
+  const [excludeNoFbclid, setExcludeNoFbclid] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
 
   const dominios = ["ahora463.io", "ahora4633.io"];
 
-  // Estado para manejar qué dominios están activos
   const [dominiosActivos, setDominiosActivos] = useState(() => {
     const initial = {};
     dominios.forEach(d => { initial[d] = true });
@@ -47,12 +48,24 @@ export default function Home() {
     fetchData();
   }, [startDate, endDate, isLoggedIn]);
 
+  const adjustToArgentinaTimezone = (date) => {
+    const argentinaOffset = -3 * 60; // GMT-3 en minutos
+    const newDate = new Date(date);
+    newDate.setMinutes(newDate.getMinutes() + argentinaOffset); // Ajusta a la zona horaria de Argentina
+    return newDate;
+  };
+
   const fetchData = async () => {
     const params = new URLSearchParams();
-    if (startDate) params.append('start', startDate.toISOString().split('T')[0]);
-    if (endDate) params.append('end', endDate.toISOString().split('T')[0]);
+    if (startDate) params.append('start', adjustToArgentinaTimezone(startDate).toISOString().split('T')[0]);
+    if (endDate) params.append('end', adjustToArgentinaTimezone(endDate).toISOString().split('T')[0]);
+  
     const res = await fetch(`/api/clicks?${params.toString()}`);
     const data = await res.json();
+
+    console.log('Datos crudos del backend:', data);
+    console.log('createdAt recibidos:', data.map(c => c.createdAt));
+
     setClicks(data);
     setFiltered(data);
   };
@@ -61,7 +74,7 @@ export default function Home() {
     setSearch(text);
     const lower = text.toLowerCase();
     const filteredList = clicks.filter(c =>
-      c.landing?.toLowerCase().includes(lower)
+      c.landing?.toLowerCase() === lower
     );
     setFiltered(filteredList);
   };
@@ -85,10 +98,13 @@ export default function Home() {
     });
   };
 
-  // Filtrar por dominios activos
   const filteredByDominio = filtered.filter(item => dominiosActivos[item.dominio]);
 
-  const displayedData = hideDuplicates ? uniqueByIp(filteredByDominio) : filteredByDominio;
+  let tempData = filteredByDominio;
+  if (excludeNoFbclid) {
+    tempData = tempData.filter(item => item.fbclid);
+  }
+  const displayedData = hideDuplicates ? uniqueByIp(tempData) : tempData;
 
   const headers = [
     { label: "Fecha", key: "createdAt" },
@@ -98,7 +114,7 @@ export default function Home() {
   ];
 
   const chartData = {
-    labels: clicks.map(c => new Date(c.createdAt).toLocaleDateString()),
+    labels: clicks.map(c => new Date(c.createdAt).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })),
     datasets: [{
       label: 'Clicks',
       data: clicks.map((_, i) => i + 1),
@@ -146,12 +162,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
-      <div className="max-w-7xl w-full bg-white p-8 rounded-lg shadow-lg">
+      <div className={styles.estadisticas}>
         <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">
           📊 Panel de Clicks desde WhatsApp
         </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className={styles.busqueda}>
           <input
             type="text"
             placeholder="Buscar por landing"
@@ -171,18 +187,27 @@ export default function Home() {
             placeholderText="Hasta"
             className="border border-gray-300 p-2 rounded shadow-sm w-full"
           />
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={hideDuplicates}
-              onChange={(e) => setHideDuplicates(e.target.checked)}
-              className="w-5 h-5"
-            />
-            <span className="text-sm">Evitar IPs duplicadas</span>
-          </label>
         </div>
-
-        {/* 🔘 Checkboxes dinámicos de dominios */}
+        <div className="flex flex-col space-y-2">
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={hideDuplicates}
+                onChange={(e) => setHideDuplicates(e.target.checked)}
+                className="w-5 h-5"
+              />
+              <span className="text-sm">Evitar IPs duplicadas</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={excludeNoFbclid}
+                onChange={(e) => setExcludeNoFbclid(e.target.checked)}
+                className="w-5 h-5"
+              />
+              <span className="text-sm">Excluir sin fbclid</span>
+            </label>
+          </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {dominios.map((dom) => (
             <label key={dom} className="flex items-center space-x-2">
@@ -197,17 +222,6 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-4 justify-center">
-          <CSVLink
-            data={displayedData}
-            headers={headers}
-            filename={`clicks-${Date.now()}.csv`}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow"
-          >
-            Exportar CSV
-          </CSVLink>
-        </div>
-
         <div className="mb-8 h-64">
           <Line data={chartData} options={chartOptions} />
         </div>
@@ -220,22 +234,25 @@ export default function Home() {
                 <th className="p-4 border border-black-300">Landing</th>
                 <th className="p-4 border border-black-300">IP</th>
                 <th className="p-4 border border-black-300">User Agent</th>
+                <th className="p-4 border border-black-300">fbclid</th>
               </tr>
             </thead>
             <tbody>
               {displayedData.map((c, i) => (
                 <tr key={i} className="hover:bg-gray-50">
-                  <td className="p-4 border border-black-200">{new Date(c.createdAt).toLocaleString()}</td>
+                  <td className="p-4 border border-black-200">{new Date(c.createdAt).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}</td>
                   <td className="p-4 border border-black-200">{c.landing}.{c.dominio}</td>
                   <td className="p-4 border border-black-200">{c.ip}</td>
                   <td className="p-4 border border-black-200 break-all">{c.user_agent?.slice(0, 70)}...</td>
+                  <td className="p-4 border border-black-200 text-center">
+                    {c.fbclid ? '✅' : '❌'}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* ✅ Total de clics mostrados */}
         <div className="mt-4 text-center">
           <p className="text-lg font-semibold text-gray-700">
             Total de clics mostrados: <span className="text-blue-600">{displayedData.length}</span>
