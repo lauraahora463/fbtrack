@@ -1,0 +1,22 @@
+.login{
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    justify-content: center;
+    align-items: center;
+}
+
+.estadisticas{
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    justify-content: center;
+    align-items: center;
+}
+
+.busqueda{
+    display: flex;
+    gap: 1em;
+    justify-content: center;
+    align-items: center;
+}
